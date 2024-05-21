@@ -16,7 +16,7 @@
 
 // TODO: change brightness smoothly?
 
-HANDLE sem_autobl_stop;
+HANDLE sem_autobl_wake;
 int last_auto_brightness = -1;
 int auto_brightness_suspend_cnt = 0;
 
@@ -167,7 +167,7 @@ void *auto_brightness_worker(void *arg)
 
                 auto_brightness_update();
 
-                ret = WaitForSingleObject(sem_autobl_stop, g_config.auto_brightness_update_interval_sec * 1000);
+                ret = WaitForSingleObject(sem_autobl_wake, g_config.auto_brightness_update_interval_sec * 1000);
                 if (ret == WAIT_TIMEOUT)
                         pr_verbose("semaphore timed out, %s\n", is_gonna_exit() ? "gonna exit" : "continue");
         }
@@ -195,8 +195,8 @@ int _auto_brightness_start(void)
 
         monitor_brightness_update();
 
-        sem_autobl_stop = CreateSemaphore(NULL, 0, 1, NULL);
-        if (!sem_autobl_stop) {
+        sem_autobl_wake = CreateSemaphore(NULL, 0, 1, NULL);
+        if (!sem_autobl_wake) {
                 pr_getlasterr("CreateSemaphore");
                 return -EINVAL;
         }
@@ -209,6 +209,18 @@ int _auto_brightness_start(void)
         tid_worker = tid;
 
         return 0;
+}
+
+void auto_brightness_trigger(void)
+{
+        if (!g_config.auto_brightness ||
+            auto_brightness_suspend_cnt ||
+            !is_auto_brightness_running())
+                return;
+
+        ReleaseSemaphore(sem_sensor_wake, 1, 0);
+        Sleep(2000);
+        ReleaseSemaphore(sem_autobl_wake, 1, 0);
 }
 
 void auto_brightness_suspend(void)
@@ -259,10 +271,10 @@ void auto_brightness_stop(void)
                 return;
         }
 
-        ReleaseSemaphore(sem_autobl_stop, 1, 0);
+        ReleaseSemaphore(sem_autobl_wake, 1, 0);
         pthread_join(tid_worker, NULL);
-        CloseHandle(sem_autobl_stop);
-        sem_autobl_stop = NULL;
+        CloseHandle(sem_autobl_wake);
+        sem_autobl_wake = NULL;
 
         pthread_mutex_unlock(&lck_autobl);
 

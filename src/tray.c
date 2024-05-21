@@ -7,6 +7,7 @@
 
 #include "monitor_auto_brightness.h"
 #include "auto_brightness.h"
+#include "sensor.h"
 #include "usrcfg.h"
 #include "monitor.h"
 #include "gui.h"
@@ -125,6 +126,11 @@ static void settings_on_click(struct tray_menu *m)
         settings_wnd_thread_create();
 }
 
+static void update_now_on_click(struct tray_menu *m)
+{
+        auto_brightness_trigger();
+}
+
 static struct tray auto_brightness_tray = {
         .icon = {
                 .path = NULL,
@@ -133,6 +139,7 @@ static struct tray auto_brightness_tray = {
         .menu = (struct tray_menu[]) {
                 { .name = L"Auto brightness", .pre_show = auto_brightness_pre_show, .on_click = auto_brightness_on_click },
                 { .name = L"Edit lux map", .on_click = edit_lux_map_on_click },
+                { .name = L"Update now", .on_click = update_now_on_click },
                 { .is_separator = 1 },
                 { .name = L"Settings", .on_click = settings_on_click },
                 { .name = L"Save config", .on_click = save_on_click },
