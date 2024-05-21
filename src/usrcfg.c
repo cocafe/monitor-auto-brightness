@@ -391,8 +391,8 @@ int usrcfg_init(void)
         pr_info("json config: %s\n", g_config.json_path);
 
         if (jbuf_load(jbuf, g_config.json_path)) {
-                pr_mb_err("failed to load config");
-                return -EINVAL;
+                pr_mb_err("failed to load config, use default config");
+                return 0;
         }
 
         usrcfg_lux_map_fix();
