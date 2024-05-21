@@ -1,5 +1,6 @@
 #include <math.h>
 #include <float.h>
+#include <time.h>
 #include <pthread.h>
 
 #include <windows.h>
@@ -12,6 +13,8 @@
 #include "monitor.h"
 #include "sensor.h"
 #include "usrcfg.h"
+
+// TODO: change brightness smoothly?
 
 HANDLE sem_autobl_stop;
 int last_auto_brightness = -1;
@@ -115,12 +118,18 @@ int is_auto_brightness_running(void)
 void auto_brightness_update(void)
 {
         float lux = lux_get();
+        struct tm *local_time;
+        time_t ts;
+
+        time(&ts);
+        local_time = localtime(&ts);
 
         if (isnan(lux)) {
                 pr_warn("invalid lux value, check sensor hub connection?\n");
                 return;
         }
 
+        pr_rawlvl(DEBUG, "%s", asctime(local_time));
         pr_rawlvl(DEBUG, "lux: %.1f\n", lux);
 
         for_each_monitor(i) {
