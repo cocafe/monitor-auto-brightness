@@ -144,7 +144,7 @@ void auto_brightness_update(void)
                 if ((int)m->brightness.curr == bl)
                         continue;
 
-                if (monitor_brightness_set(i, bl))
+                if (0 == monitor_brightness_set(i, bl))
                         m->brightness.curr = bl;
         }
 }

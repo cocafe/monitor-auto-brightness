@@ -15,7 +15,7 @@ void *monitor_brightness_set_worker(void *arg)
                         if (m->brightness.curr == m->brightness.set)
                                 continue;
 
-                        if (monitor_brightness_set(i, m->brightness.set))
+                        if (monitor_brightness_set(i, m->brightness.set) == 0)
                                 m->brightness.curr = m->brightness.set;
                 }
 
@@ -118,15 +118,6 @@ void brightness_adjust_wnd_create(void)
         if (__sync_bool_compare_and_swap(&running, 0, 1) == 0)
                 return;
 
-        auto_brightness_suspend();
-
-        if (pthread_create(&worker_tid, NULL, monitor_brightness_set_worker, &should_stop)) {
-                pr_mb_err("Failed to create brightness control thread\n");
-                goto out;
-        }
-
-        monitor_brightness_update();
-
         for_each_monitor(i) {
                 struct monitor_info *m = &minfo[i];
 
@@ -136,8 +127,20 @@ void brightness_adjust_wnd_create(void)
                 if (!m->cap.support_brightness)
                         continue;
 
+                if (g_config.auto_brightness)
+                        m->brightness.set = m->brightness.curr;
+
                 wnd_height += (int)(widget_h * 2.0f);
         }
+
+        auto_brightness_suspend();
+
+        if (pthread_create(&worker_tid, NULL, monitor_brightness_set_worker, &should_stop)) {
+                pr_mb_err("Failed to create brightness control thread\n");
+                goto out;
+        }
+
+        monitor_brightness_update();
 
         wnd.allow_sizing = 1;
         wnd.allow_maximize = 0;
