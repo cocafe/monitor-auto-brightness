@@ -80,6 +80,9 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
 
         console_init();
 
+        if (!g_console_show)
+                console_hide();
+
         if ((err = usrcfg_init())) {
                 goto out_logging;
         }
