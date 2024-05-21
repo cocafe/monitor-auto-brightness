@@ -8,6 +8,7 @@
 
 struct config {
         char json_path[PATH_MAX];
+        uint32_t auto_save;
         uint32_t force_brightness_control;
         uint32_t auto_brightness;
         uint32_t auto_brightness_update_interval_sec;

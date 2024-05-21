@@ -15,6 +15,7 @@
 
 struct config g_config = {
         .json_path = DEFAULT_JSON_PATH,
+        .auto_save = 0,
         .auto_brightness = 1,
         .auto_brightness_update_interval_sec = 10,
         .brightness_update_interval_msec = 1,
@@ -254,6 +255,7 @@ static int usrcfg_root_key_create(jbuf_t *b)
         {
                 void *obj_settings = jbuf_obj_open(b, "settings");
 
+                jbuf_bool_add(b, "auto_save", &g_config.auto_save);
                 jbuf_bool_add(b, "force_brightness_control", &g_config.force_brightness_control);
                 jbuf_bool_add(b, "auto_brightness", &g_config.auto_brightness);
                 jbuf_u32_add(b, "auto_brightness_update_interval_sec", &g_config.auto_brightness_update_interval_sec);
@@ -386,6 +388,9 @@ int usrcfg_init(void)
 
 int usrcfg_exit(void)
 {
+        if (g_config.auto_save)
+                usrcfg_save();
+
         pthread_mutex_lock(&lck_save);
         pthread_mutex_unlock(&lck_save);
 

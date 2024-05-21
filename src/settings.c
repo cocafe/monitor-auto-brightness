@@ -29,6 +29,16 @@ int settings_wnd_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
         {
                 nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
                 nk_layout_row_push(ctx, 0.6f);
+                nk_widget_tooltip(ctx, "Save configs on exit automatically");
+                nk_label(ctx, "Auto save", NK_TEXT_LEFT);
+                nk_layout_row_push(ctx, 0.4f);
+                nk_checkbox_label(ctx, "", (int *)&g_config.auto_save);
+                nk_layout_row_end(ctx);
+        }
+
+        {
+                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                nk_layout_row_push(ctx, 0.6f);
                 nk_widget_tooltip(ctx, "Some monitors support brightness control but failed to detect");
                 nk_label(ctx, "Force brightness control", NK_TEXT_LEFT);
                 nk_layout_row_push(ctx, 0.4f);
