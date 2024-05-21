@@ -306,6 +306,21 @@ int settings_wnd_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
                 nk_layout_row_end(ctx);
         }
 
+        {
+                nk_layout_row_dynamic(ctx, widget_h, 1);
+                nk_label(ctx, "", NK_TEXT_LEFT);
+        }
+
+        {
+                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                nk_layout_row_push(ctx, 0.8f);
+                nk_label(ctx, "", NK_TEXT_LEFT);
+                nk_layout_row_push(ctx, 0.2f);
+                if (nk_button_label(ctx, "OK"))
+                        return 0;
+                nk_layout_row_end(ctx);
+        }
+
         return 1;
 }
 
@@ -313,7 +328,7 @@ void settings_wnd_create(void)
 {
         static int running = 0;
         struct nkgdi_window wnd = { };
-        int wnd_height = (int)(widget_h * 25.0f);
+        int wnd_height = (int)(widget_h * 30.0f);
         int wnd_width = 700;
         int err;
 
