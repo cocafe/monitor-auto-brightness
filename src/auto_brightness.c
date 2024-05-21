@@ -121,7 +121,7 @@ void auto_brightness_update(void)
                 return;
         }
 
-        pr_dbg("current lux: %.1f\n", lux);
+        pr_rawlvl(DEBUG, "lux: %.1f\n", lux);
 
         for_each_monitor(i) {
                 struct monitor_info *m = &minfo[i];
@@ -139,7 +139,7 @@ void auto_brightness_update(void)
                         continue;
                 }
 
-                pr_dbg("monitor \"%ls\" brightness current: %d target: %d\n", m->str.name, m->brightness.curr, bl);
+                pr_rawlvl(DEBUG, "monitor \"%ls\" brightness current: %d target: %d\n", m->str.name, m->brightness.curr, bl);
 
                 if ((int)m->brightness.curr == bl)
                         continue;
