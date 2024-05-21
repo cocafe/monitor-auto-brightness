@@ -61,8 +61,12 @@ static int __monitor_brightness_compute(struct monitor_info *mon, int lux)
                 if (lux == (int)curr->lux)
                         return (int)curr->bl;
 
-                if ((int)curr->lux < lux && lux < (int)next->lux)
+                if ((int)curr->lux < lux && lux < (int)next->lux) {
+                        if (curr->bl == next->bl) // fast path
+                                return (int)curr->bl;
+
                         return linear_resolve(curr, next, lux);
+                }
         }
 
         return -EINVAL;
