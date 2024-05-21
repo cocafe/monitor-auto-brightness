@@ -60,6 +60,16 @@ static void console_show_update(struct tray_menu *m)
                 m->checked = 1;
 }
 
+static void log_colored_update(struct tray_menu *m)
+{
+        m->checked = (int)g_logprint_colored;
+}
+
+static void log_colored_click(struct tray_menu *m)
+{
+        g_logprint_colored = !g_logprint_colored;
+}
+
 static void loglvl_click(struct tray_menu *m)
 {
         uint32_t level = (size_t)m->userdata;
@@ -153,6 +163,8 @@ static struct tray auto_brightness_tray = {
                         .name = L"Logging",
                         .submenu = (struct tray_menu[]) {
                                 { .name = L"Show", .pre_show = console_show_update, .on_click = console_show_click },
+                                { .is_separator = 1 },
+                                { .name = L"Colored", .pre_show = log_colored_update, .on_click = log_colored_click },
                                 { .is_separator = 1 },
                                 { .name = L"Verbose", .pre_show = loglvl_update, .on_click = loglvl_click, .userdata = (void *)LOG_LEVEL_VERBOSE },
                                 { .name = L"Debug",   .pre_show = loglvl_update, .on_click = loglvl_click, .userdata = (void *)LOG_LEVEL_DEBUG   },
