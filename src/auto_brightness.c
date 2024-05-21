@@ -14,8 +14,6 @@
 #include "sensor.h"
 #include "usrcfg.h"
 
-// TODO: change brightness smoothly?
-
 HANDLE sem_autobl_wake;
 int last_auto_brightness = -1;
 int auto_brightness_suspend_cnt = 0;
@@ -154,11 +152,13 @@ void auto_brightness_update(void)
 
                 pr_rawlvl(DEBUG, "monitor \"%ls\" brightness current: %d target: %d\n", m->str.name, m->brightness.curr, bl);
 
+                monitor_brightness_update(m);
+
                 if ((int)m->brightness.curr == bl)
                         continue;
 
-                if (0 == monitor_brightness_set(i, bl))
-                        m->brightness.curr = bl;
+                if (monitor_brightness_set(m, bl) == 0)
+                        monitor_brightness_update(m);
         }
 }
 
@@ -197,7 +197,7 @@ int _auto_brightness_start(void)
                 return -EALREADY;
         }
 
-        monitor_brightness_update();
+        monitors_brightness_update();
 
         sem_autobl_wake = CreateSemaphore(NULL, 0, 1, NULL);
         if (!sem_autobl_wake) {

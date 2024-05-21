@@ -24,26 +24,72 @@ struct monitor_info minfo[MONITOR_MAX];
 
 // TODO: lock
 // TODO: idle brightness
+// TODO: trigger to refresh monitor
 
-int monitor_brightness_set(size_t idx, uint32_t brightness)
+int monitor_brightness_get(struct monitor_info *m)
 {
-        struct monitor_info *m;
+        HMONITOR hmonitor = m->handle.monitor_list[0].hPhysicalMonitor;
+        DWORD min = 0, max = 0, curr;
 
-        if (idx >= ARRAY_SIZE(minfo))
-                return -EINVAL;
+        if (GetMonitorBrightness(hmonitor, &min, &curr, &max) == FALSE) {
+                pr_getlasterr("GetMonitorBrightness");
+                return -EFAULT;
+        }
 
-        m = &minfo[idx];
+        return (int)curr;
+}
+
+int monitor_brightness_set(struct monitor_info *m, uint32_t bl)
+{
+        int smooth = 0;
 
         if (!m->active)
                 return -ENODEV;
 
-        if (brightness > m->brightness.max)
-                brightness = m->brightness.max;
+        if (bl > m->brightness.max)
+                bl = m->brightness.max;
 
-        if (brightness < m->brightness.min)
-                brightness = m->brightness.min;
+        if (bl < m->brightness.min)
+                bl = m->brightness.min;
 
-        if (SetMonitorBrightness(m->handle.phy_monitor, brightness) == FALSE) {
+        if (!g_config.smooth_brightness.enabled)
+                smooth = 0;
+        else {
+                int delta = abs((int)m->brightness.curr - (int)m->brightness.set);
+                if (delta >= (int)g_config.smooth_brightness.threshold) {
+                        smooth = 1;
+                }
+        }
+
+        if (smooth) {
+                uint32_t ms = g_config.smooth_brightness.interval_ms;
+                int step = (int)g_config.smooth_brightness.step;
+                int n = (int)m->brightness.curr;
+                int target = (int)bl;
+
+                while (target != n) {
+                        if (n < target) {
+                                n += step;
+                                if (n > target)
+                                        n = target;
+                        } else if (n > target) {
+                                n -= step;
+                                if (n < target)
+                                        n = target;
+                        }
+
+                        if (SetMonitorBrightness(m->handle.phy_monitor, n) == FALSE) {
+                                pr_getlasterr("SetMonitorBrightness()");
+                                return -EIO;
+                        }
+
+                        Sleep(ms);
+                }
+
+                return 0;
+        }
+
+        if (SetMonitorBrightness(m->handle.phy_monitor, bl) == FALSE) {
                 pr_getlasterr("SetMonitorBrightness()");
                 return -EIO;
         }
@@ -268,22 +314,19 @@ int phy_monitor_info_update(void)
         return 0;
 }
 
-int __monitor_brightness_update(struct monitor_info *m)
+int monitor_brightness_update(struct monitor_info *m)
 {
-        HMONITOR hmonitor = m->handle.monitor_list[0].hPhysicalMonitor;
-        DWORD min = 0, max = 0, curr;
+        int ret = monitor_brightness_get(m);
 
-        if (GetMonitorBrightness(hmonitor, &min, &curr, &max) == FALSE) {
-                pr_getlasterr("GetMonitorBrightness");
-                return -EFAULT;
-        }
+        if (ret < 0)
+                return ret;
 
-        m->brightness.curr = curr;
+        m->brightness.curr = ret;
 
         return 0;
 }
 
-int monitor_brightness_update(void)
+int monitors_brightness_update(void)
 {
         for_each_monitor(i) {
                 struct monitor_info *m = &minfo[i];
@@ -295,7 +338,7 @@ int monitor_brightness_update(void)
                 if (!m->cap.support_brightness)
                         continue;
 
-                if ((err = __monitor_brightness_update(m)))
+                if ((err = monitor_brightness_update(m)))
                         return err;
         }
 

@@ -29,6 +29,12 @@ struct config g_config = {
                 .min = 0,
                 .max = 1000,
         },
+        .smooth_brightness = {
+                .enabled = 1,
+                .interval_ms = 300,
+                .threshold = 25,
+                .step = 5,
+        },
         .monitor_list = LIST_HEAD_INIT(g_config.monitor_list),
 };
 
@@ -260,6 +266,17 @@ static int usrcfg_root_key_create(jbuf_t *b)
                 jbuf_bool_add(b, "auto_brightness", &g_config.auto_brightness);
                 jbuf_u32_add(b, "auto_brightness_update_interval_sec", &g_config.auto_brightness_update_interval_sec);
                 jbuf_u32_add(b, "manual_brightness_update_interval_msec", &g_config.brightness_update_interval_msec);
+
+                {
+                        void *obj_smbl = jbuf_obj_open(b, "smooth_brightness");
+
+                        jbuf_bool_add(b, "enabled", &g_config.smooth_brightness.enabled);
+                        jbuf_u32_add(b, "interval_ms", &g_config.smooth_brightness.interval_ms);
+                        jbuf_u32_add(b, "threshold", &g_config.smooth_brightness.threshold);
+                        jbuf_u32_add(b, "step", &g_config.smooth_brightness.step);
+
+                        jbuf_obj_close(b, obj_smbl);
+                }
 
                 {
                         void *obj_lux_range = jbuf_obj_open(b, "lux_range");

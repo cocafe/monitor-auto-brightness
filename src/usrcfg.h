@@ -23,6 +23,12 @@ struct config {
                 uint32_t min;
                 uint32_t max;
         } lux_range;
+        struct {
+                uint32_t enabled;
+                uint32_t interval_ms;
+                uint32_t threshold;
+                uint32_t step;
+        } smooth_brightness;
 };
 
 struct monitor_cfg {

@@ -21,304 +21,368 @@ int settings_wnd_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
         if (is_gonna_exit())
                 return 0;
 
-        {
-                nk_layout_row_dynamic(ctx, widget_h, 1);
-                nk_label(ctx, "General", NK_TEXT_LEFT);
-        }
-
-        {
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_widget_tooltip(ctx, "Save configs on exit automatically");
-                nk_label(ctx, "Auto save", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                nk_checkbox_label(ctx, "", (int *)&g_config.auto_save);
-                nk_layout_row_end(ctx);
-        }
-
-        {
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_widget_tooltip(ctx, "Some monitors support brightness control but failed to detect");
-                nk_label(ctx, "Force brightness control", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                nk_checkbox_label(ctx, "", (int *)&g_config.force_brightness_control);
-                nk_layout_row_end(ctx);
-        }
-
-        {
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_widget_tooltip(ctx, "Enable auto brightness control");
-                nk_label(ctx, "Auto brightness", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                nk_checkbox_label(ctx, "", last_auto_brightness);
-                nk_layout_row_end(ctx);
-        }
-
-        {
-                static char buf[64] = { };
-                int len = strlen(buf);
-                int state;
-                uint32_t t;
-
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Auto brightness update interval", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                nk_widget_tooltip(ctx, "In seconds");
-                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
-                nk_layout_row_end(ctx);
-
-                buf[sizeof(buf) - 1] = '\0';
-                if (len >= 0 && (size_t)len < sizeof(buf))
-                        buf[len] = '\0';
-
-                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
-                        g_config.auto_brightness_update_interval_sec = t;
-
-                if (state & NK_EDIT_INACTIVE)
-                        snprintf(buf, sizeof(buf), "%u", g_config.auto_brightness_update_interval_sec);
-        }
-
-        {
-                static char buf[64] = { };
-                int len = strlen(buf);
-                int state;
-                uint32_t t;
-
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Brightness update interval in manual", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                nk_widget_tooltip(ctx, "In milliseconds");
-                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
-                nk_layout_row_end(ctx);
-
-                buf[sizeof(buf) - 1] = '\0';
-                if (len >= 0 && (size_t)len < sizeof(buf))
-                        buf[len] = '\0';
-
-                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
-                        g_config.brightness_update_interval_msec = t;
-
-                if (state & NK_EDIT_INACTIVE)
-                        snprintf(buf, sizeof(buf), "%u", g_config.brightness_update_interval_msec);
-        }
-
-        {
-                nk_layout_row_dynamic(ctx, widget_h, 1);
-                nk_label(ctx, "", NK_TEXT_LEFT);
-        }
-
-        {
-                nk_layout_row_dynamic(ctx, widget_h, 1);
-                nk_label(ctx, "Look", NK_TEXT_LEFT);
-        }
-
-        {
-                int t;
-
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Theme", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                t = nk_combo(ctx, nk_theme_strs, NUM_NK_THEMES, nk_theme, widget_h, nk_vec2(nk_widget_width(ctx), 400));
-
-                if (t != nk_theme) {
-                        nk_theme = t;
-                        nk_set_style(ctx, nk_theme);
-                }
-        }
-
-        {
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Widget height", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                // nk_slider_float(ctx, 10.0f, &widget_h, 100.0f, 0.5f);
-                nk_property_float_nolabel(ctx, "#widget_height", 10.0f, &widget_h, 100.0f, 0.5f, 0.5f);
-                nk_layout_row_end(ctx);
-        }
-
-        {
-                nk_layout_row_dynamic(ctx, widget_h, 1);
-                nk_label(ctx, "", NK_TEXT_LEFT);
-        }
-
-        {
-                nk_layout_row_dynamic(ctx, widget_h, 1);
-                nk_label(ctx, "Lux Range", NK_TEXT_LEFT);
-        }
-
-        {
-                static char buf[64] = { };
-                int len = strlen(buf);
-                int state;
-                uint32_t t;
-
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Min", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
-                nk_layout_row_end(ctx);
-
-                buf[sizeof(buf) - 1] = '\0';
-                if (len >= 0 && (size_t)len < sizeof(buf))
-                        buf[len] = '\0';
-
-                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
-                        g_config.lux_range.min = t;
-
-                if (state & NK_EDIT_INACTIVE)
-                        snprintf(buf, sizeof(buf), "%u", g_config.lux_range.min);
-        }
-
-        {
-                static char buf[64] = { };
-                int len = strlen(buf);
-                int state;
-                uint32_t t;
-
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Max", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
-                nk_layout_row_end(ctx);
-
-                buf[sizeof(buf) - 1] = '\0';
-                if (len >= 0 && (size_t)len < sizeof(buf))
-                        buf[len] = '\0';
-
-                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
-                        g_config.lux_range.max = t;
-
-                if (state & NK_EDIT_INACTIVE)
-                        snprintf(buf, sizeof(buf), "%u", g_config.lux_range.max);
-        }
-
-        {
-                nk_layout_row_dynamic(ctx, widget_h, 1);
-                nk_label(ctx, "", NK_TEXT_LEFT);
-        }
-
-        {
-                nk_layout_row_dynamic(ctx, widget_h, 1);
-                nk_label(ctx, "Sensor Hub", NK_TEXT_LEFT);
-        }
-
-        {
-                static char buf[256] = { };
-                int len = strlen(buf);
-                int state;
-                uint32_t t;
-
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Host", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_ascii);
-                nk_layout_row_end(ctx);
-
-                buf[sizeof(buf) - 1] = '\0';
-                if (len >= 0 && (size_t)len < sizeof(buf))
-                        buf[len] = '\0';
-
-                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1)) {
-                        strncpy(g_config.sensor_hub.host, buf, sizeof(g_config.sensor_hub.host));
+        if (nk_tree_push(ctx, NK_TREE_NODE, "General", NK_MAXIMIZED)) {
+                {
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_widget_tooltip(ctx, "Save configs on exit automatically");
+                        nk_label(ctx, "Auto save", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        nk_checkbox_label(ctx, "", (int *)&g_config.auto_save);
+                        nk_layout_row_end(ctx);
                 }
 
-                if (state & NK_EDIT_INACTIVE)
-                        strncpy(buf, g_config.sensor_hub.host, sizeof(buf));
-        }
+                {
+                        int t;
 
-        {
-                static char buf[64] = { };
-                int len = strlen(buf);
-                int state;
-                uint32_t t;
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Theme", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        t = nk_combo(ctx, nk_theme_strs, NUM_NK_THEMES, nk_theme, widget_h,
+                                     nk_vec2(nk_widget_width(ctx), 400));
 
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Port", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
-                nk_layout_row_end(ctx);
-
-                buf[sizeof(buf) - 1] = '\0';
-                if (len >= 0 && (size_t)len < sizeof(buf))
-                        buf[len] = '\0';
-
-                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
-                        g_config.sensor_hub.port = t;
-
-                if (state & NK_EDIT_INACTIVE)
-                        snprintf(buf, sizeof(buf), "%u", g_config.sensor_hub.port);
-        }
-
-        {
-                static char buf[64] = { };
-                int len = strlen(buf);
-                int state;
-                uint32_t t;
-
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Query interval", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                nk_widget_tooltip(ctx, "In seconds");
-                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
-                nk_layout_row_end(ctx);
-
-                buf[sizeof(buf) - 1] = '\0';
-                if (len >= 0 && (size_t)len < sizeof(buf))
-                        buf[len] = '\0';
-
-                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
-                        g_config.sensor_hub.query_interval_sec = t;
-
-                if (state & NK_EDIT_INACTIVE)
-                        snprintf(buf, sizeof(buf), "%u", g_config.sensor_hub.query_interval_sec);
-        }
-
-        {
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, " ", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                if (nk_button_label(ctx, "Test")) {
-                        ReleaseSemaphore(sem_sensor_wake, 1, 0);
+                        if (t != nk_theme) {
+                                nk_theme = t;
+                                nk_set_style(ctx, nk_theme);
+                        }
                 }
-                nk_layout_row_end(ctx);
+
+                {
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Widget height", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        // nk_slider_float(ctx, 10.0f, &widget_h, 100.0f, 0.5f);
+                        nk_property_float_nolabel(ctx, "#widget_height", 10.0f, &widget_h, 100.0f, 0.5f, 0.5f);
+                        nk_layout_row_end(ctx);
+                }
+
+                nk_tree_pop(ctx);
         }
 
-        {
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Connection state", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                nk_label(ctx, is_sensorhub_connected() ? "Connected" : "Unavailable", NK_TEXT_LEFT);
-                nk_layout_row_end(ctx);
+        if (nk_tree_push(ctx, NK_TREE_NODE, "Brightness Control", NK_MAXIMIZED)) {
+                {
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_widget_tooltip(ctx, "Some monitors support brightness control but failed to detect");
+                        nk_label(ctx, "Force enabled", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        nk_checkbox_label(ctx, "", (int *)&g_config.force_brightness_control);
+                        nk_layout_row_end(ctx);
+                }
+
+                {
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_widget_tooltip(ctx, "Enable auto brightness control");
+                        nk_label(ctx, "Auto brightness", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        nk_checkbox_label(ctx, "", last_auto_brightness);
+                        nk_layout_row_end(ctx);
+                }
+
+                {
+                        static char buf[64] = { };
+                        int len = strlen(buf);
+                        int state;
+                        uint32_t t;
+
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Auto brightness update interval", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        nk_widget_tooltip(ctx, "In seconds");
+                        state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                        nk_layout_row_end(ctx);
+
+                        buf[sizeof(buf) - 1] = '\0';
+                        if (len >= 0 && (size_t)len < sizeof(buf))
+                                buf[len] = '\0';
+
+                        if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                g_config.auto_brightness_update_interval_sec = t;
+
+                        if (state & NK_EDIT_INACTIVE)
+                                snprintf(buf, sizeof(buf), "%u", g_config.auto_brightness_update_interval_sec);
+                }
+
+                {
+                        static char buf[64] = { };
+                        int len = strlen(buf);
+                        int state;
+                        uint32_t t;
+
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Brightness update interval in manual", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        nk_widget_tooltip(ctx, "In milliseconds");
+                        state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                        nk_layout_row_end(ctx);
+
+                        buf[sizeof(buf) - 1] = '\0';
+                        if (len >= 0 && (size_t)len < sizeof(buf))
+                                buf[len] = '\0';
+
+                        if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                g_config.brightness_update_interval_msec = t;
+
+                        if (state & NK_EDIT_INACTIVE)
+                                snprintf(buf, sizeof(buf), "%u", g_config.brightness_update_interval_msec);
+                }
+
+                if (nk_tree_push(ctx, NK_TREE_NODE, "Smooth Brightness", NK_MAXIMIZED)) {
+                        {
+                                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                                nk_layout_row_push(ctx, 0.6f);
+                                nk_label(ctx, "Enabled", NK_TEXT_LEFT);
+                                nk_layout_row_push(ctx, 0.4f);
+                                nk_checkbox_label(ctx, "", (int *)&g_config.smooth_brightness.enabled);
+                                nk_layout_row_end(ctx);
+                        }
+
+                        {
+                                static char buf[64] = { };
+                                int len = strlen(buf);
+                                int state;
+                                uint32_t t;
+
+                                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                                nk_layout_row_push(ctx, 0.6f);
+                                nk_label(ctx, "Interval", NK_TEXT_LEFT);
+                                nk_layout_row_push(ctx, 0.4f);
+                                nk_widget_tooltip(ctx, "In milliseconds");
+                                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                                nk_layout_row_end(ctx);
+
+                                buf[sizeof(buf) - 1] = '\0';
+                                if (len >= 0 && (size_t)len < sizeof(buf))
+                                        buf[len] = '\0';
+
+                                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                        g_config.smooth_brightness.interval_ms = t;
+
+                                if (state & NK_EDIT_INACTIVE)
+                                        snprintf(buf, sizeof(buf), "%u", g_config.smooth_brightness.interval_ms);
+                        }
+
+                        {
+                                static char buf[64] = { };
+                                int len = strlen(buf);
+                                int state;
+                                uint32_t t;
+
+                                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                                nk_layout_row_push(ctx, 0.6f);
+                                nk_label(ctx, "Threshold", NK_TEXT_LEFT);
+                                nk_layout_row_push(ctx, 0.4f);
+                                nk_widget_tooltip(ctx, "Delta to trigger smooth brightness");
+                                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                                nk_layout_row_end(ctx);
+
+                                buf[sizeof(buf) - 1] = '\0';
+                                if (len >= 0 && (size_t)len < sizeof(buf))
+                                        buf[len] = '\0';
+
+                                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                        g_config.smooth_brightness.threshold = t;
+
+                                if (state & NK_EDIT_INACTIVE)
+                                        snprintf(buf, sizeof(buf), "%u", g_config.smooth_brightness.threshold);
+                        }
+
+                        {
+                                static char buf[64] = { };
+                                int len = strlen(buf);
+                                int state;
+                                uint32_t t;
+
+                                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                                nk_layout_row_push(ctx, 0.6f);
+                                nk_label(ctx, "Step", NK_TEXT_LEFT);
+                                nk_layout_row_push(ctx, 0.4f);
+                                state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                                nk_layout_row_end(ctx);
+
+                                buf[sizeof(buf) - 1] = '\0';
+                                if (len >= 0 && (size_t)len < sizeof(buf))
+                                        buf[len] = '\0';
+
+                                if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                        g_config.smooth_brightness.step = t;
+
+                                if (state & NK_EDIT_INACTIVE)
+                                        snprintf(buf, sizeof(buf), "%u", g_config.smooth_brightness.step);
+                        }
+
+                        nk_tree_pop(ctx);
+                }
+
+                nk_tree_pop(ctx);
         }
 
-        {
-                static char buf[32] = { };
+        if (nk_tree_push(ctx, NK_TREE_NODE, "Lux Range", NK_MINIMIZED)) {
+                {
+                        static char buf[64] = { };
+                        int len = strlen(buf);
+                        int state;
+                        uint32_t t;
 
-                snprintf(buf, sizeof(buf), "%.1f", lux_get());
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Min", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                        nk_layout_row_end(ctx);
 
-                nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
-                nk_layout_row_push(ctx, 0.6f);
-                nk_label(ctx, "Current lux", NK_TEXT_LEFT);
-                nk_layout_row_push(ctx, 0.4f);
-                nk_label(ctx, buf, NK_TEXT_LEFT);
-                nk_layout_row_end(ctx);
+                        buf[sizeof(buf) - 1] = '\0';
+                        if (len >= 0 && (size_t)len < sizeof(buf))
+                                buf[len] = '\0';
+
+                        if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                g_config.lux_range.min = t;
+
+                        if (state & NK_EDIT_INACTIVE)
+                                snprintf(buf, sizeof(buf), "%u", g_config.lux_range.min);
+                }
+
+                {
+                        static char buf[64] = { };
+                        int len = strlen(buf);
+                        int state;
+                        uint32_t t;
+
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Max", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                        nk_layout_row_end(ctx);
+
+                        buf[sizeof(buf) - 1] = '\0';
+                        if (len >= 0 && (size_t)len < sizeof(buf))
+                                buf[len] = '\0';
+
+                        if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                g_config.lux_range.max = t;
+
+                        if (state & NK_EDIT_INACTIVE)
+                                snprintf(buf, sizeof(buf), "%u", g_config.lux_range.max);
+                }
+
+                nk_tree_pop(ctx);
         }
 
-        {
-                nk_layout_row_dynamic(ctx, widget_h, 1);
-                nk_label(ctx, "", NK_TEXT_LEFT);
+        if (nk_tree_push(ctx, NK_TREE_NODE, "Sensor Hub", NK_MAXIMIZED)) {
+                {
+                        static char buf[256] = { };
+                        int len = strlen(buf);
+                        int state;
+                        uint32_t t;
+
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Host", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_ascii);
+                        nk_layout_row_end(ctx);
+
+                        buf[sizeof(buf) - 1] = '\0';
+                        if (len >= 0 && (size_t)len < sizeof(buf))
+                                buf[len] = '\0';
+
+                        if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1)) {
+                                strncpy(g_config.sensor_hub.host, buf, sizeof(g_config.sensor_hub.host));
+                        }
+
+                        if (state & NK_EDIT_INACTIVE)
+                                strncpy(buf, g_config.sensor_hub.host, sizeof(buf));
+                }
+
+                {
+                        static char buf[64] = { };
+                        int len = strlen(buf);
+                        int state;
+                        uint32_t t;
+
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Port", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                        nk_layout_row_end(ctx);
+
+                        buf[sizeof(buf) - 1] = '\0';
+                        if (len >= 0 && (size_t)len < sizeof(buf))
+                                buf[len] = '\0';
+
+                        if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                g_config.sensor_hub.port = t;
+
+                        if (state & NK_EDIT_INACTIVE)
+                                snprintf(buf, sizeof(buf), "%u", g_config.sensor_hub.port);
+                }
+
+                {
+                        static char buf[64] = { };
+                        int len = strlen(buf);
+                        int state;
+                        uint32_t t;
+
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Query interval", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        nk_widget_tooltip(ctx, "In seconds");
+                        state = nk_edit_string(ctx, NK_EDIT_FIELD, buf, &len, sizeof(buf), nk_filter_decimal);
+                        nk_layout_row_end(ctx);
+
+                        buf[sizeof(buf) - 1] = '\0';
+                        if (len >= 0 && (size_t)len < sizeof(buf))
+                                buf[len] = '\0';
+
+                        if ((state & NK_EDIT_DEACTIVATED) && (sscanf(buf, "%u", &t) == 1))
+                                g_config.sensor_hub.query_interval_sec = t;
+
+                        if (state & NK_EDIT_INACTIVE)
+                                snprintf(buf, sizeof(buf), "%u", g_config.sensor_hub.query_interval_sec);
+                }
+
+                {
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, " ", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        if (nk_button_label(ctx, "Test")) {
+                                ReleaseSemaphore(sem_sensor_wake, 1, 0);
+                        }
+                        nk_layout_row_end(ctx);
+                }
+
+                {
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Connection state", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        nk_label(ctx, is_sensorhub_connected() ? "Connected" : "Unavailable", NK_TEXT_LEFT);
+                        nk_layout_row_end(ctx);
+                }
+
+                {
+                        static char buf[32] = { };
+
+                        snprintf(buf, sizeof(buf), "%.1f", lux_get());
+
+                        nk_layout_row_begin(ctx, NK_DYNAMIC, widget_h, 2);
+                        nk_layout_row_push(ctx, 0.6f);
+                        nk_label(ctx, "Current lux", NK_TEXT_LEFT);
+                        nk_layout_row_push(ctx, 0.4f);
+                        nk_label(ctx, buf, NK_TEXT_LEFT);
+                        nk_layout_row_end(ctx);
+                }
+
+                nk_tree_pop(ctx);
         }
 
         {

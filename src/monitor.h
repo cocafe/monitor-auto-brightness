@@ -44,8 +44,11 @@ struct monitor_info {
 
 extern struct monitor_info minfo[MONITOR_MAX];
 
-int monitor_brightness_update(void);
-int monitor_brightness_set(size_t idx, uint32_t brightness);
+int monitors_brightness_update(void);
+
+int monitor_brightness_get(struct monitor_info *m);
+int monitor_brightness_update(struct monitor_info *m);
+int monitor_brightness_set(struct monitor_info *m, uint32_t bl);
 
 int monitor_info_update(void);
 int monitor_info_free(void);

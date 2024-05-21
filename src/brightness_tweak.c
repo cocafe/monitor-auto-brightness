@@ -12,11 +12,13 @@ void *monitor_brightness_set_worker(void *arg)
                         if (!m->cap.support_brightness)
                                 continue;
 
+                        monitor_brightness_update(m);
+
                         if (m->brightness.curr == m->brightness.set)
                                 continue;
 
-                        if (monitor_brightness_set(i, m->brightness.set) == 0)
-                                m->brightness.curr = m->brightness.set;
+                        if (monitor_brightness_set(m, m->brightness.set) == 0)
+                                monitor_brightness_update(m);
                 }
 
                 usleep(g_config.brightness_update_interval_msec * 1000);
@@ -140,7 +142,7 @@ void brightness_adjust_wnd_create(void)
                 goto out;
         }
 
-        monitor_brightness_update();
+        monitors_brightness_update();
 
         wnd.allow_sizing = 1;
         wnd.allow_maximize = 0;
