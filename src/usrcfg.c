@@ -6,6 +6,7 @@
 #include <libjj/opts.h>
 #include <libjj/logging.h>
 #include <libjj/list_sort.h>
+#include <libjj/iconv.h>
 
 #include "gui.h"
 #include "monitor.h"
@@ -380,6 +381,28 @@ int usrcfg_lux_map_fix(void)
         return 0;
 }
 
+static int json_path_fix(char *json_path, size_t bytes)
+{
+        wchar_t json_path_w[_MAX_PATH] = { 0 };
+        wchar_t full_path[4096] = { 0 };
+        size_t cnt;
+
+        iconv_utf82wc(json_path, bytes, json_path_w, sizeof(json_path_w));
+        json_path_w[WCBUF_LEN(json_path_w) - 1] = L'\0';
+
+        cnt = GetFullPathName(json_path_w, WCBUF_LEN(json_path_w), full_path, NULL);
+        if (cnt == 0) {
+                mb_err("failed to get full path of json config\n");
+                return -EIO;
+        }
+
+        iconv_wc2utf8(full_path, sizeof(full_path), json_path, bytes);
+
+        pr_rawlvl(INFO, "json config full path: \"%s\"\n", json_path);
+
+        return 0;
+}
+
 int usrcfg_init(void)
 {
         jbuf_t *jbuf = &jbuf_usrcfg;
@@ -389,6 +412,9 @@ int usrcfg_init(void)
                 return err;
 
         pr_info("json config: %s\n", g_config.json_path);
+
+        if ((err = json_path_fix(g_config.json_path, sizeof(g_config.json_path))))
+                return err;
 
         if (jbuf_load(jbuf, g_config.json_path)) {
                 pr_mb_err("failed to load config, use default config");
