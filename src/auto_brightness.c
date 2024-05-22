@@ -152,7 +152,7 @@ void auto_brightness_update(void)
 
                 pr_rawlvl(DEBUG, "monitor \"%ls\" brightness current: %d target: %d\n", m->str.name, m->brightness.curr, bl);
 
-                monitor_brightness_update(m);
+                // monitor_brightness_update(m);
 
                 if ((int)m->brightness.curr == bl)
                         continue;
@@ -222,6 +222,8 @@ void auto_brightness_trigger(void)
             !is_auto_brightness_running())
                 return;
 
+        pr_info("\n");
+
         ReleaseSemaphore(sem_sensor_wake, 1, 0);
         Sleep(2000);
         ReleaseSemaphore(sem_autobl_wake, 1, 0);
@@ -229,6 +231,9 @@ void auto_brightness_trigger(void)
 
 void auto_brightness_suspend(void)
 {
+        if (READ_ONCE(auto_brightness_suspend_cnt) > 0)
+                goto count;
+
         if (last_auto_brightness == -1)
                 last_auto_brightness = g_config.auto_brightness;
 
@@ -237,11 +242,15 @@ void auto_brightness_suspend(void)
                 auto_brightness_stop();
         }
 
+count:
         __sync_fetch_and_add(&auto_brightness_suspend_cnt, 1);
 }
 
 void auto_brightness_resume(void)
 {
+        if (READ_ONCE(auto_brightness_suspend_cnt) == 0)
+                return;
+
         if (__sync_sub_and_fetch(&auto_brightness_suspend_cnt, 1) == 0) {
                 if (last_auto_brightness == 1) {
                         g_config.auto_brightness = 1;

@@ -16,11 +16,11 @@
 #include "monitor_auto_brightness.h"
 #include "monitor.h"
 #include "auto_brightness.h"
+#include "power_event.h"
 #include "usrcfg.h"
 #include "sensor.h"
 #include "tray.h"
 #include "gui.h"
-
 
 int g_should_exit = 0;
 
@@ -99,6 +99,9 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 goto out_sensorhub;
         }
 
+        if ((err = power_event_init()))
+                goto out_tray;
+
         if (g_config.auto_brightness)
                 auto_brightness_start();
 
@@ -110,6 +113,9 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
 
         auto_brightness_stop();
 
+        power_event_exit();
+
+out_tray:
         auto_brightness_tray_exit();
 
 out_sensorhub:

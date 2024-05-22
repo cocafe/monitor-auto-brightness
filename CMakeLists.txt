@@ -40,6 +40,8 @@ set(SOURCE_FILES
     asset/resource.h
     src/monitor_auto_brightness.h
     src/main.c
+    src/power_event.c
+    src/power_event.h
     src/auto_brightness.c
     src/auto_brightness.h
     src/usrcfg.c
