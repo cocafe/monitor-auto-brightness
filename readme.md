@@ -2,9 +2,9 @@
 
 A little utility to control PC monitor brightness automatically by ambient light.
 
-![tray](asset\tray.png)
-![brightness_tweak](asset\brightness_tweak.png)
-![lux_map](asset\lux_map.png)
+![tray](asset/tray.png)
+![brightness_tweak](asset/brightness_tweak.png)
+![lux_map](asset/lux_map.png)
 
 ### Requirement
 
