@@ -189,6 +189,9 @@ int _auto_brightness_start(void)
 {
         pthread_t tid;
 
+        if (auto_brightness_suspend_cnt > 0)
+                return -EBUSY;
+
         if (!g_config.auto_brightness)
                 return -EPERM;
 
@@ -229,9 +232,14 @@ void auto_brightness_trigger(void)
         ReleaseSemaphore(sem_autobl_wake, 1, 0);
 }
 
+int is_auto_brightness_suspended(void)
+{
+        return (auto_brightness_suspend_cnt > 0) ? 1 : 0;
+}
+
 void auto_brightness_suspend(void)
 {
-        if (READ_ONCE(auto_brightness_suspend_cnt) > 0)
+        if (READ_ONCE(auto_brightness_suspend_cnt) >= 0)
                 goto count;
 
         if (last_auto_brightness == -1)
@@ -248,7 +256,7 @@ count:
 
 void auto_brightness_resume(void)
 {
-        if (READ_ONCE(auto_brightness_suspend_cnt) == 0)
+        if (READ_ONCE(auto_brightness_suspend_cnt) <= 0)
                 return;
 
         if (__sync_sub_and_fetch(&auto_brightness_suspend_cnt, 1) == 0) {

@@ -21,6 +21,7 @@
 #include "auto_brightness.h"
 
 // TODO: idle brightness
+// TODO: hotkey
 
 static HWND notify_wnd;
 
