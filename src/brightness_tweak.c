@@ -17,8 +17,12 @@ void *monitor_brightness_set_worker(void *arg)
                         if (m->brightness.curr == m->brightness.set)
                                 continue;
 
-                        if (monitor_brightness_set(m, m->brightness.set) == 0)
+                        if (monitor_brightness_set(m, m->brightness.set) == 0) {
                                 monitor_brightness_update(m);
+
+                                if (!is_auto_brightness_suspended())
+                                        m->monitor_save->brightness.set = m->brightness.set;
+                        }
                 }
 
                 usleep(g_config.brightness_update_interval_msec * 1000);
