@@ -43,6 +43,7 @@ struct monitor_info {
 #define for_each_monitor(i) for (size_t (i) = 0; (i) < ARRAY_SIZE(minfo); (i)++)
 
 extern struct monitor_info minfo[MONITOR_MAX];
+extern int monitor_info_update_required;
 
 int monitors_brightness_update(void);
 

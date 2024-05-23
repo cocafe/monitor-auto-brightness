@@ -146,6 +146,11 @@ static void update_now_on_click(struct tray_menu *m)
         auto_brightness_trigger();
 }
 
+static void refresh_monitor_on_click(struct tray_menu *m)
+{
+        monitor_info_update();
+}
+
 static struct tray auto_brightness_tray = {
         .icon = {
                 .path = NULL,
@@ -155,6 +160,8 @@ static struct tray auto_brightness_tray = {
                 { .name = L"Auto brightness", .pre_show = auto_brightness_pre_show, .on_click = auto_brightness_on_click },
                 { .name = L"Edit lux map", .on_click = edit_lux_map_on_click },
                 { .name = L"Update now", .pre_show = update_now_pre_show, .on_click = update_now_on_click },
+                { .is_separator = 1 },
+                { .name = L"Refresh monitor", .on_click = refresh_monitor_on_click },
                 { .is_separator = 1 },
                 { .name = L"Settings", .on_click = settings_on_click },
                 { .name = L"Save config", .on_click = save_on_click },

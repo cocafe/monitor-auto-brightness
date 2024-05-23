@@ -16,9 +16,12 @@
 #include <libjj/opts.h>
 
 #include "usrcfg.h"
+#include "gui.h"
 #include "monitor.h"
+#include "auto_brightness.h"
 
 static HWND notify_wnd;
+int monitor_info_update_required;
 
 struct monitor_info minfo[MONITOR_MAX];
 
@@ -445,7 +448,7 @@ int virtual_desktop_info_update(void)
         return 0;
 }
 
-int monitor_info_update(void)
+int __monitor_info_update(void)
 {
         int reset_idx = 1;
         int err = 0;
@@ -469,15 +472,36 @@ int monitor_info_update(void)
         return err;
 }
 
+int monitor_info_update(void)
+{
+        int err;
+
+        WRITE_ONCE(monitor_info_update_required, 1);
+        auto_brightness_suspend();
+        bl_wnd_lock(); // prevent creating window
+
+        err = __monitor_info_update();
+
+        bl_wnd_unlock();
+        auto_brightness_resume();
+
+        WRITE_ONCE(monitor_info_update_required, 0);
+
+        return err;
+}
+
 static LRESULT CALLBACK notify_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+        int err;
+
         if (msg != WM_DISPLAYCHANGE)
                 goto def_proc;
 
         // pr_info("display changed: bit: %lld %ux%u\n", wparam, LOWORD(lparam), HIWORD(lparam));
         pr_dbg("display mode changed\n");
 
-        monitor_info_update();
+        if ((err = monitor_info_update()))
+                pr_mb_err("display mode changed, but failed to update monitor info: %d (%s)", err, strerror(err));
 
         return TRUE;
 
@@ -515,7 +539,7 @@ int monitor_init(void)
 {
         int err;
 
-        if ((err = monitor_info_update())) {
+        if ((err = __monitor_info_update())) {
                 pr_mb_err("failed to read monitor info\n");
                 return err;
         }
