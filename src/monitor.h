@@ -45,6 +45,9 @@ struct monitor_info {
 extern struct monitor_info minfo[MONITOR_MAX];
 extern int monitor_info_update_required;
 
+int monitors_use_count_inc(void);
+int monitors_use_count_dec(void);
+
 int monitors_brightness_update(void);
 
 int monitor_brightness_get(struct monitor_info *m);

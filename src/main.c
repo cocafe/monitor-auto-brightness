@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <uchar.h>
+#include <signal.h>
 
 #include <windows.h>
 #include <winuser.h>
@@ -38,6 +39,36 @@ void auto_brightness_quit(void)
         PostQuitMessage(0);
 }
 
+static void sigint_handler(int dummy) {
+        UNUSED_PARAM(dummy);
+
+        pr_info("receive SIGINT\n");
+
+        // auto_brightness_quit();
+}
+
+static BOOL HandlerRoutine(DWORD dwCtrlType)
+{
+        switch (dwCtrlType) {
+        case CTRL_C_EVENT: // ^C event
+                console_hide();
+                auto_brightness_tray_update();
+                break;
+
+        case CTRL_CLOSE_EVENT: // console is being closed
+                // auto_brightness_quit();
+                break;
+
+        case CTRL_LOGOFF_EVENT: // user is logging off
+        case CTRL_SHUTDOWN_EVENT: // system is shutting down
+        case CTRL_BREAK_EVENT: // ^break
+        default:
+                break;
+        }
+
+        return TRUE; // FALSE will pass event to next signal handler
+};
+
 void wnd_msg_process(int blocking)
 {
         MSG msg;
@@ -68,9 +99,6 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         setbuf(stdout, NULL);
         logging_colored_set(1);
 
-        if ((err = logging_init()))
-                return err;
-
         if ((err = lopts_parse(__argc, __wargv, NULL))) {
                 if (err != -EAGAIN)
                         pr_mb_err("invalid arguments\n");
@@ -78,7 +106,23 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 goto out_logging;
         }
 
-        console_init();
+        if ((err = logging_init()))
+                return err;
+
+        if (g_console_alloc) {
+                while (!IsWindowEnabled(g_console_hwnd))
+                        Sleep(1);
+
+                // if HANDLER is NULL, and TRUE is set, console will ignore ^C
+                // TRUE: add handler
+                // FALSE: remove handler
+                SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+
+                // XXX: racing with console window initialization
+                console_title_set(L"Auto Brightness Log (^C to hide console)");
+        } else {
+                signal(SIGINT, sigint_handler);
+        }
 
         if (!g_console_show)
                 console_hide();

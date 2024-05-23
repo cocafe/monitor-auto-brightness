@@ -20,14 +20,24 @@
 #include "monitor.h"
 #include "auto_brightness.h"
 
+// TODO: idle brightness
+
 static HWND notify_wnd;
+
+static int monitors_use_count = 0;
 int monitor_info_update_required;
 
 struct monitor_info minfo[MONITOR_MAX];
 
-// TODO: lock
-// TODO: idle brightness
-// TODO: trigger to refresh monitor
+int monitors_use_count_inc(void)
+{
+        return __sync_add_and_fetch(&monitors_use_count, 1);
+}
+
+int monitors_use_count_dec(void)
+{
+        return __sync_sub_and_fetch(&monitors_use_count, 1);
+}
 
 int monitor_brightness_get(struct monitor_info *m)
 {
@@ -477,12 +487,13 @@ int monitors_info_update(void)
         int err;
 
         WRITE_ONCE(monitor_info_update_required, 1);
+
         auto_brightness_suspend();
-        bl_wnd_lock(); // prevent creating window
+        while (READ_ONCE(monitors_use_count) > 0)
+                ;
 
         err = __monitors_info_update();
 
-        bl_wnd_unlock();
         auto_brightness_resume();
 
         WRITE_ONCE(monitor_info_update_required, 0);

@@ -4,9 +4,6 @@
 extern float widget_h;
 extern int nk_theme;
 
-int bl_wnd_lock(void);
-int bl_wnd_unlock(void);
-
 void lux_map_wnd_thread_create(void);
 void settings_wnd_thread_create(void);
 void brightness_adjust_wnd_create(void);

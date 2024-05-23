@@ -285,7 +285,7 @@ int lux_map_wnd_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
 {
         struct luxmap_wnd_data *data = nkgdi_window_userdata_get(wnd);
 
-        if (is_gonna_exit())
+        if (is_gonna_exit() || READ_ONCE(monitor_info_update_required))
                 return 0;
 
         if (lux_mpa_sel_draw(ctx, data)) {
@@ -390,8 +390,7 @@ void lux_map_wnd_create(void)
         if (__sync_bool_compare_and_swap(&running, 0, 1) == 0)
                 return;
 
-        // TODO: grab monitor lock
-        // TODO: check monitor needs update flag
+        monitors_use_count_inc();
 
         if ((err = lux_map_wnd_prepare(&wnd_data))) {
                 pr_mb_err("lux_map_wnd_prepare(): %s", strerror(err));
@@ -435,6 +434,7 @@ out_free:
         lux_map_wnd_free(&wnd_data);
 
 out:
+        monitors_use_count_dec();
         running = 0;
 }
 

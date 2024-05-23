@@ -1,15 +1,3 @@
-static pthread_mutex_t lck_bl_wnd = PTHREAD_MUTEX_INITIALIZER;
-
-int bl_wnd_lock(void)
-{
-        return pthread_mutex_lock(&lck_bl_wnd);
-}
-
-int bl_wnd_unlock(void)
-{
-        return pthread_mutex_unlock(&lck_bl_wnd);
-}
-
 void *monitor_brightness_set_worker(void *arg)
 {
         int *should_stop = arg;
@@ -125,13 +113,17 @@ void brightness_wnd_position_set(struct nkgdi_window *wnd)
 
 void brightness_adjust_wnd_create(void)
 {
+        static int running = 0;
         struct nkgdi_window wnd = { 0 };
         pthread_t worker_tid = 0;
         int should_stop = 0;
         int wnd_height = (int)(widget_h * 3.0f);
         int wnd_width = 500;
 
-        bl_wnd_lock();
+        if (__sync_bool_compare_and_swap(&running, 0, 1) == 0)
+                return;
+
+        monitors_use_count_inc();
 
         for_each_monitor(i) {
                 struct monitor_info *m = &minfo[i];
@@ -181,6 +173,6 @@ void brightness_adjust_wnd_create(void)
 
 out:
         auto_brightness_resume();
-
-        bl_wnd_unlock();
+        monitors_use_count_dec();
+        running = 0;
 }
