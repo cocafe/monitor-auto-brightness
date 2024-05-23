@@ -51,9 +51,10 @@ int monitor_brightness_get(struct monitor_info *m);
 int monitor_brightness_update(struct monitor_info *m);
 int monitor_brightness_set(struct monitor_info *m, uint32_t bl);
 
-int monitor_info_update(void);
-int monitor_info_free(void);
-int monitor_init(void);
-int monitor_exit(void);
+int monitors_info_update(void);
+int monitors_info_free(void);
+
+int monitors_init(void);
+int monitors_exit(void);
 
 #endif // __AUTO_BRIGHTNESS_MONITOR_H__

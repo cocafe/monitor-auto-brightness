@@ -361,7 +361,7 @@ void __monitor_info_free(struct monitor_info *m)
         memset(m, 0, sizeof(struct monitor_info));
 }
 
-int monitor_info_free(void)
+int monitors_info_free(void)
 {
         for_each_monitor(i) {
                 __monitor_info_free(&minfo[i]);
@@ -448,12 +448,12 @@ int virtual_desktop_info_update(void)
         return 0;
 }
 
-int __monitor_info_update(void)
+int __monitors_info_update(void)
 {
         int reset_idx = 1;
         int err = 0;
 
-        monitor_info_free();
+        monitors_info_free();
 
         if (EnumDisplayMonitors(NULL, NULL, phy_monitor_enum_cb, (intptr_t)&reset_idx) == FALSE) {
                 pr_getlasterr("EnumDisplayMonitors\n");
@@ -472,7 +472,7 @@ int __monitor_info_update(void)
         return err;
 }
 
-int monitor_info_update(void)
+int monitors_info_update(void)
 {
         int err;
 
@@ -480,7 +480,7 @@ int monitor_info_update(void)
         auto_brightness_suspend();
         bl_wnd_lock(); // prevent creating window
 
-        err = __monitor_info_update();
+        err = __monitors_info_update();
 
         bl_wnd_unlock();
         auto_brightness_resume();
@@ -500,7 +500,7 @@ static LRESULT CALLBACK notify_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         // pr_info("display changed: bit: %lld %ux%u\n", wparam, LOWORD(lparam), HIWORD(lparam));
         pr_dbg("display mode changed\n");
 
-        if ((err = monitor_info_update()))
+        if ((err = monitors_info_update()))
                 pr_mb_err("display mode changed, but failed to update monitor info: %d (%s)", err, strerror(err));
 
         return TRUE;
@@ -535,11 +535,11 @@ static HANDLE notify_wnd_create(void)
         return wnd;
 }
 
-int monitor_init(void)
+int monitors_init(void)
 {
         int err;
 
-        if ((err = __monitor_info_update())) {
+        if ((err = __monitors_info_update())) {
                 pr_mb_err("failed to read monitor info\n");
                 return err;
         }
@@ -553,10 +553,10 @@ int monitor_init(void)
         return 0;
 }
 
-int monitor_exit(void)
+int monitors_exit(void)
 {
         DestroyWindow(notify_wnd);
-        monitor_info_free();
+        monitors_info_free();
 
         return 0;
 }

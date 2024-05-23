@@ -87,7 +87,7 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 goto out_logging;
         }
 
-        if ((err = monitor_init())) {
+        if ((err = monitors_init())) {
                 goto out_usrcfg;
         }
 
@@ -122,7 +122,7 @@ out_sensorhub:
         sensorhub_exit();
 
 out_monitor:
-        monitor_exit();
+        monitors_exit();
 
 out_usrcfg:
         usrcfg_exit();

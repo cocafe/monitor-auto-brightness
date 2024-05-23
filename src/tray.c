@@ -148,7 +148,7 @@ static void update_now_on_click(struct tray_menu *m)
 
 static void refresh_monitor_on_click(struct tray_menu *m)
 {
-        monitor_info_update();
+        monitors_info_update();
 }
 
 static struct tray auto_brightness_tray = {
