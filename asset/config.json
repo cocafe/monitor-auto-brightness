@@ -1,56 +1,28 @@
 {
-    "settings": {
-        "force_brightness_control": true,
-        "auto_brightness": true,
-        "brightness_update_interval_msec": 500,
-        "sensorhub": {
-            "host": "192.168.77.123",
-            "port": 5959,
-            "query_interval_sec": 60
-        },
-        "dcc_ci": {
-            "use_high_level": true,
-            "use_low_level": false
-        }
-    },
-    "monitors": [
-        {
-            "name": "42",
-            "dev_path": "456",
-            "brightness": {
-                "min": 0,
-                "max": 100,
-                "set": 16
-            },
-            "lux_map": [
-                {
-                    "lux": 0,
-                    "bl": 0
-                },
-                {
-                    "lux": 30,
-                    "bl": 16
-                }
-            ]
-        },
-        {
-            "name": "2515",
-            "dev_path": "123",
-            "brightness": {
-                "min": 0,
-                "max": 100,
-                "set": 16
-            },
-            "lux_map": [
-                {
-                    "lux": 0,
-                    "bl": 0
-                },
-                {
-                    "lux": 30,
-                    "bl": 16
-                }
-            ]
-        }
-    ]
+	"settings" : {
+		"auto_save" : true,
+		"force_brightness_control" : true,
+		"auto_brightness" : true,
+		"auto_brightness_update_interval_sec" : 60,
+		"manual_brightness_update_interval_msec" : 500,
+		"smooth_brightness" : {
+			"enabled" : true,
+			"interval_ms" : 150,
+			"threshold" : 20,
+			"step" : 5
+		},
+		"lux_range" : {
+			"min" : 0,
+			"max" : 1000
+		},
+		"sensor_hub" : {
+			"host" : "192.168.77.123",
+			"port" : 5959,
+			"query_interval_sec" : 58
+		},
+		"nuklear" : {
+			"theme" : 11,
+			"widget_height" : 32.0000
+		}
+	}
 }
