@@ -136,6 +136,8 @@ void brightness_adjust_wnd_create(void)
 
                 if (g_config.auto_brightness)
                         m->brightness.set = m->brightness.curr;
+                else
+                        m->brightness.set = m->monitor_save->brightness.set;
 
                 wnd_height += (int)(widget_h * 2.0f);
         }
