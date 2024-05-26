@@ -237,6 +237,11 @@ int is_auto_brightness_suspended(void)
         return (auto_brightness_suspend_cnt > 0) ? 1 : 0;
 }
 
+int is_last_auto_brightness_enabled(void)
+{
+        return last_auto_brightness == 1;
+}
+
 void auto_brightness_suspend(void)
 {
         if (READ_ONCE(auto_brightness_suspend_cnt) >= 0)

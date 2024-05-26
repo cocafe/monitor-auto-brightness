@@ -20,8 +20,7 @@ void *monitor_brightness_set_worker(void *arg)
                         if (monitor_brightness_set(m, m->brightness.set) == 0) {
                                 monitor_brightness_update(m);
 
-                                // if auto brightness is enabled
-                                if (!is_auto_brightness_suspended())
+                                if (!is_last_auto_brightness_enabled())
                                         m->monitor_save->brightness.set = m->brightness.set;
                         }
                 }
