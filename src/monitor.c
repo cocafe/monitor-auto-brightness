@@ -60,6 +60,8 @@ int monitor_brightness_set(struct monitor_info *m, uint32_t bl)
         if (!m->active)
                 return -ENODEV;
 
+        pr_dbg("monitor: \"%ls\" brightness: %u\n", m->str.name, bl);
+
         if (bl > m->brightness.max)
                 bl = m->brightness.max;
 

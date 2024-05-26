@@ -15,7 +15,7 @@
 #include "usrcfg.h"
 
 HANDLE sem_autobl_wake;
-int last_auto_brightness = -1;
+int auto_brightness_is_waiting = 0;
 int auto_brightness_suspend_cnt = 0;
 
 static int is_running = 0;
@@ -67,7 +67,7 @@ static int __monitor_brightness_compute(struct monitor_info *mon, int lux)
                 }
         }
 
-        return -EINVAL;
+        return -ENOENT;
 }
 
 int _monitor_brightness_compute(struct monitor_info *mon, float lux)
@@ -114,7 +114,7 @@ int monitor_brightness_compute(struct monitor_info *mon, float lux)
 
 int is_auto_brightness_running(void)
 {
-        return is_running;
+        return READ_ONCE(is_running);
 }
 
 void auto_brightness_update(void)
@@ -164,19 +164,34 @@ void auto_brightness_update(void)
 
 void *auto_brightness_worker(void *arg)
 {
-        is_running = 1;
+        HANDLE sem_wake = sem_autobl_wake;
 
-        while (!is_gonna_exit() && g_config.auto_brightness) {
+        WRITE_ONCE(is_running, 1);
+
+        while (!is_gonna_exit()) {
                 DWORD ret;
 
-                auto_brightness_update();
+                if (is_auto_brightness_suspended()) {
+                        pr_info("suspended\n");
+                        goto wait;
+                }
 
-                ret = WaitForSingleObject(sem_autobl_wake, g_config.auto_brightness_update_interval_sec * 1000);
+                if (!g_config.auto_brightness)
+                        break;
+
+                monitors_use_count_inc();
+                auto_brightness_update();
+                monitors_use_count_dec();
+
+wait:
+                WRITE_ONCE(auto_brightness_is_waiting, 1);
+                ret = WaitForSingleObject(sem_wake, g_config.auto_brightness_update_interval_sec * 1000);
                 if (ret == WAIT_TIMEOUT)
                         pr_verbose("semaphore timed out, %s\n", is_gonna_exit() ? "gonna exit" : "continue");
+                WRITE_ONCE(auto_brightness_is_waiting, 0);
         }
 
-        is_running = 0;
+        WRITE_ONCE(is_running, 0);
 
         pr_info("stopped\n");
 
@@ -188,9 +203,6 @@ void *auto_brightness_worker(void *arg)
 int _auto_brightness_start(void)
 {
         pthread_t tid;
-
-        if (auto_brightness_suspend_cnt > 0)
-                return -EBUSY;
 
         if (!g_config.auto_brightness)
                 return -EPERM;
@@ -229,34 +241,23 @@ void auto_brightness_trigger(void)
 
         ReleaseSemaphore(sem_sensor_wake, 1, 0);
         Sleep(2000);
-        ReleaseSemaphore(sem_autobl_wake, 1, 0);
+
+        if (sem_autobl_wake)
+                ReleaseSemaphore(sem_autobl_wake, 1, 0);
 }
 
 int is_auto_brightness_suspended(void)
 {
-        return (auto_brightness_suspend_cnt > 0) ? 1 : 0;
-}
-
-int is_last_auto_brightness_enabled(void)
-{
-        return last_auto_brightness == 1;
+        return (READ_ONCE(auto_brightness_suspend_cnt) > 0) ? 1 : 0;
 }
 
 void auto_brightness_suspend(void)
 {
-        if (READ_ONCE(auto_brightness_suspend_cnt) >= 0)
-                goto count;
-
-        if (last_auto_brightness == -1)
-                last_auto_brightness = g_config.auto_brightness;
-
-        if (g_config.auto_brightness && is_auto_brightness_running()) {
-                g_config.auto_brightness = 0;
-                auto_brightness_stop();
-        }
-
-count:
         __sync_fetch_and_add(&auto_brightness_suspend_cnt, 1);
+
+        if (is_auto_brightness_running()) {
+                while (READ_ONCE(auto_brightness_is_waiting) == 0);
+        }
 }
 
 void auto_brightness_resume(void)
@@ -264,14 +265,10 @@ void auto_brightness_resume(void)
         if (READ_ONCE(auto_brightness_suspend_cnt) <= 0)
                 return;
 
-        if (__sync_sub_and_fetch(&auto_brightness_suspend_cnt, 1) == 0) {
-                if (last_auto_brightness == 1) {
-                        g_config.auto_brightness = 1;
-                        auto_brightness_start();
-                }
+        __sync_sub_and_fetch(&auto_brightness_suspend_cnt, 1);
 
-                last_auto_brightness = -1;
-        }
+        if (is_auto_brightness_running())
+                auto_brightness_trigger();
 }
 
 int auto_brightness_start(void)
@@ -297,10 +294,12 @@ void auto_brightness_stop(void)
                 return;
         }
 
-        ReleaseSemaphore(sem_autobl_wake, 1, 0);
-        pthread_join(tid_worker, NULL);
-        CloseHandle(sem_autobl_wake);
-        sem_autobl_wake = NULL;
+        if (sem_autobl_wake) {
+                ReleaseSemaphore(sem_autobl_wake, 1, 0);
+                pthread_join(tid_worker, NULL);
+                CloseHandle(sem_autobl_wake);
+                sem_autobl_wake = NULL;
+        }
 
         pthread_mutex_unlock(&lck_autobl);
 

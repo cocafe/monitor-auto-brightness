@@ -16,8 +16,6 @@ static const char *nk_theme_strs[] = {
 
 int settings_wnd_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
 {
-        int *last_auto_brightness = nkgdi_window_userdata_get(wnd);
-
         if (is_gonna_exit())
                 return 0;
 
@@ -78,7 +76,7 @@ int settings_wnd_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
                         nk_widget_tooltip(ctx, "Enable auto brightness control");
                         nk_label(ctx, "Auto brightness", NK_TEXT_LEFT);
                         nk_layout_row_push(ctx, 0.4f);
-                        nk_checkbox_label(ctx, "", last_auto_brightness);
+                        nk_checkbox_label(ctx, "", (int *)&g_config.auto_brightness);
                         nk_layout_row_end(ctx);
                 }
 
@@ -398,6 +396,14 @@ int settings_wnd_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
         return 1;
 }
 
+void settings_apply(void)
+{
+        if (g_config.auto_brightness)
+                auto_brightness_start();
+        else
+                auto_brightness_stop();
+}
+
 void settings_wnd_create(void)
 {
         static int running = 0;
@@ -428,7 +434,6 @@ void settings_wnd_create(void)
 
         nkgdi_window_create(&wnd, wnd_width, wnd_height, "Settings", 0, 0);
         nkgdi_window_icon_set(&wnd, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)));
-        nkgdi_window_userdata_set(&wnd, &last_auto_brightness);
         nkgdi_window_set_center(&wnd);
         nk_set_style(nkgdi_window_nkctx_get(&wnd), nk_theme);
 
@@ -441,6 +446,8 @@ void settings_wnd_create(void)
         usrcfg_save_unlock();
 
         auto_brightness_tray_update();
+
+        settings_apply();
 
 out:
         running = 0;
