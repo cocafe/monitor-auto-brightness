@@ -251,6 +251,11 @@ int is_auto_brightness_suspended(void)
         return (READ_ONCE(auto_brightness_suspend_cnt) > 0) ? 1 : 0;
 }
 
+void auto_brightness_suspend_async(void)
+{
+        __sync_fetch_and_add(&auto_brightness_suspend_cnt, 1);
+}
+
 void auto_brightness_suspend(void)
 {
         __sync_fetch_and_add(&auto_brightness_suspend_cnt, 1);
@@ -260,15 +265,32 @@ void auto_brightness_suspend(void)
         }
 }
 
+void *auto_brightness_resume_trigger(void *arg)
+{
+        static int running = 0;
+
+        if (__sync_bool_compare_and_swap(&running, 0, 1) == 0)
+                pthread_exit(NULL);
+
+        if (is_auto_brightness_running())
+                auto_brightness_trigger();
+
+        running = 0;
+        pthread_exit(NULL);
+
+        return NULL;
+}
+
 void auto_brightness_resume(void)
 {
+        pthread_t tid;
+
         if (READ_ONCE(auto_brightness_suspend_cnt) <= 0)
                 return;
 
         __sync_sub_and_fetch(&auto_brightness_suspend_cnt, 1);
 
-        if (is_auto_brightness_running())
-                auto_brightness_trigger();
+        pthread_create(&tid, NULL, auto_brightness_resume_trigger, NULL);
 }
 
 int auto_brightness_start(void)

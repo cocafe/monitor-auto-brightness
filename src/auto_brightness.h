@@ -13,6 +13,7 @@ int is_auto_brightness_running(void);
 void auto_brightness_trigger(void);
 
 void auto_brightness_suspend(void);
+void auto_brightness_suspend_async(void);
 void auto_brightness_resume(void);
 
 int auto_brightness_start(void);

@@ -146,7 +146,7 @@ void brightness_adjust_wnd_create(void)
                 wnd_height += (int)(widget_h * 2.0f);
         }
 
-        auto_brightness_suspend();
+        auto_brightness_suspend_async();
 
         if (pthread_create(&worker_tid, NULL, monitor_brightness_set_worker, &should_stop)) {
                 pr_mb_err("Failed to create brightness control thread\n");
@@ -169,6 +169,7 @@ void brightness_adjust_wnd_create(void)
         nkgdi_window_icon_set(&wnd, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)));
         nk_set_style(nkgdi_window_nkctx_get(&wnd), nk_theme);
         brightness_wnd_position_set(&wnd);
+        SetFocus(wnd._internal.window_handle);
 
         nkgdi_window_blocking_update(&wnd);
 
