@@ -87,9 +87,17 @@ static int sensorhub_buf_parse(char *buf)
 
         pr_verbose("%s\n", &b[1]);
 
-        if (1 != sscanf(&b[1], "sensorhub_lux %f", &lux)) {
-                pr_warn("failed to parse data string \"%s\"\n", b);
-                return -EINVAL;
+        char *d;
+        if ((d = strchr(b, '}'))) {
+                if (1 != sscanf(&d[1], "%f", &lux)) {
+                        pr_warn("failed to parse data string \"%s\"\n", b);
+                        return -EINVAL;
+                }
+        } else {
+                if (1 != sscanf(&b[1], "sensorhub_lux %f", &lux)) {
+                        pr_warn("failed to parse data string \"%s\"\n", b);
+                        return -EINVAL;
+                }
         }
 
         last_fetch = time(NULL);
