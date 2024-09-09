@@ -153,7 +153,7 @@ void monitor_cfg_add(struct monitor_cfg *c)
         list_add(&c->node, &g_config.monitor_list);
 }
 
-extern int usrcfg_monitor_info_merge(void)
+int usrcfg_monitor_info_merge(void)
 {
         for_each_monitor(i) {
                 struct monitor_info *m = &minfo[i];
@@ -171,6 +171,9 @@ extern int usrcfg_monitor_info_merge(void)
 
                         if (is_wstr_equal(c->dev_path, m->str.reg_path)) {
                                 m->monitor_save = c;
+                                m->brightness.set = c->brightness.set;
+                                m->brightness.min = c->brightness.min;
+                                m->brightness.max = c->brightness.max;
                                 found = 1;
 
                                 break;
