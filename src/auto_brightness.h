@@ -17,6 +17,6 @@ void auto_brightness_suspend_async(void);
 void auto_brightness_resume(void);
 
 int auto_brightness_start(void);
-void auto_brightness_stop(void);
+int auto_brightness_stop(void);
 
 #endif // __AUTO_BRIGHTNESS_H__

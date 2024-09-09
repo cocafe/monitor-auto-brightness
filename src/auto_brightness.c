@@ -185,9 +185,11 @@ void *auto_brightness_worker(void *arg)
 
 wait:
                 WRITE_ONCE(auto_brightness_is_waiting, 1);
+
                 ret = WaitForSingleObject(sem_wake, g_config.auto_brightness_update_interval_sec * 1000);
                 if (ret == WAIT_TIMEOUT)
                         pr_verbose("semaphore timed out, %s\n", is_gonna_exit() ? "gonna exit" : "continue");
+
                 WRITE_ONCE(auto_brightness_is_waiting, 0);
         }
 
@@ -307,13 +309,18 @@ int auto_brightness_start(void)
         return err;
 }
 
-void auto_brightness_stop(void)
+int auto_brightness_stop(void)
 {
         pthread_mutex_lock(&lck_autobl);
 
         if (!is_running) {
                 pthread_mutex_unlock(&lck_autobl);
-                return;
+                return -EALREADY;
+        }
+
+        if (is_auto_brightness_suspended()) {
+                pthread_mutex_unlock(&lck_autobl);
+                return -EBUSY;
         }
 
         if (sem_autobl_wake) {
@@ -326,4 +333,6 @@ void auto_brightness_stop(void)
         pthread_mutex_unlock(&lck_autobl);
 
         pr_info("stopped\n");
+
+        return 0;
 }

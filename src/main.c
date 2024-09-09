@@ -88,8 +88,7 @@ void wnd_msg_process(int blocking)
         }
 }
 
-int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
-                    LPWSTR cmdline, int cmdshow)
+int wmain(int argc, wchar_t *argv[])
 {
         int err = 0;
 
@@ -103,7 +102,7 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 if (err != -EAGAIN)
                         pr_mb_err("invalid arguments\n");
 
-                goto out_logging;
+                return err;
         }
 
         if ((err = logging_init()))
@@ -139,7 +138,7 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 goto out_monitor;
         }
 
-        if ((err = auto_brightness_tray_init(ins))) {
+        if ((err = auto_brightness_tray_init(GetModuleHandle(NULL)))) {
                 goto out_sensorhub;
         }
 

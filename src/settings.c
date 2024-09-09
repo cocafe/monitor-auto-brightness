@@ -398,10 +398,15 @@ int settings_wnd_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
 
 void settings_apply(void)
 {
-        if (g_config.auto_brightness)
-                auto_brightness_start();
-        else
-                auto_brightness_stop();
+        int err;
+
+        if (g_config.auto_brightness) {
+                if ((err = auto_brightness_start()))
+                        mb_err("failed to start auto brightness, %d %s\n", err, strerror(abs(err)));
+        } else {
+                if ((err = auto_brightness_stop()))
+                        mb_err("failed to stop auto brightness, %d %s\n", err, strerror(abs(err)));
+        }
 }
 
 void settings_wnd_create(void)

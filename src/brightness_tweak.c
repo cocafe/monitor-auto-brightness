@@ -153,6 +153,7 @@ void brightness_adjust_wnd_create(void)
                 goto out;
         }
 
+        auto_brightness_tray_update();
         monitors_brightness_update();
 
         wnd.allow_sizing = 1;

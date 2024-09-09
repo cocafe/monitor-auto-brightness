@@ -105,7 +105,7 @@ static void save_on_click(struct tray_menu *m)
 
 static void auto_brightness_pre_show(struct tray_menu *m)
 {
-        if (auto_brightness_suspend_cnt)
+        if (is_auto_brightness_suspended())
                 m->disabled = 1;
         else
                 m->disabled = 0;
@@ -118,12 +118,17 @@ static void auto_brightness_pre_show(struct tray_menu *m)
 
 static void auto_brightness_on_click(struct tray_menu *m)
 {
-        g_config.auto_brightness = !g_config.auto_brightness;
+        if (g_config.auto_brightness && is_auto_brightness_running()) {
+                g_config.auto_brightness = 0;
 
-        if (!g_config.auto_brightness && is_auto_brightness_running())
-                auto_brightness_stop();
-        else
-                auto_brightness_start();
+                if (auto_brightness_stop())
+                        g_config.auto_brightness = 1;
+        } else {
+                g_config.auto_brightness = 1;
+
+                if (auto_brightness_start())
+                        g_config.auto_brightness = 0;
+        }
 }
 
 static void edit_lux_map_on_click(struct tray_menu *m)
