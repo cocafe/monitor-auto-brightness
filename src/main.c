@@ -147,6 +147,8 @@ int wmain(int argc, wchar_t *argv[])
 
         if (g_config.auto_brightness)
                 auto_brightness_start();
+        else
+                monitors_brightness_set();
 
         gui_init();
 

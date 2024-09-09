@@ -49,6 +49,7 @@ int monitors_use_count_inc(void);
 int monitors_use_count_dec(void);
 
 int monitors_brightness_update(void);
+void monitors_brightness_set(void);
 
 int monitor_brightness_get(struct monitor_info *m);
 int monitor_brightness_update(struct monitor_info *m);

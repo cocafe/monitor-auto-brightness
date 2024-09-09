@@ -300,7 +300,6 @@ int __phy_monitor_info_update(struct monitor_info *m)
                                 m->brightness.min = min;
                                 m->brightness.max = max;
                                 m->brightness.curr = curr;
-                                m->brightness.set = curr;
                                 m->cap.support_brightness = 1;
                         }
                 }
@@ -359,6 +358,31 @@ int monitors_brightness_update(void)
         }
 
         return 0;
+}
+
+void monitors_brightness_set(void)
+{
+        for_each_monitor(i) {
+                struct monitor_info *m = &minfo[i];
+
+                if (!m->active)
+                        continue;
+
+                if (!m->cap.support_brightness)
+                        continue;
+
+                monitor_brightness_update(m);
+
+                if (m->brightness.curr == m->brightness.set)
+                        continue;
+
+                if (monitor_brightness_set(m, m->brightness.set) == 0) {
+                        monitor_brightness_update(m);
+
+                        if (!g_config.auto_brightness)
+                                m->monitor_save->brightness.set = m->brightness.set;
+                }
+        }
 }
 
 void __monitor_info_free(struct monitor_info *m)

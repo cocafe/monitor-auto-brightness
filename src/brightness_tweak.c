@@ -3,28 +3,7 @@ void *monitor_brightness_set_worker(void *arg)
         int *should_stop = arg;
 
         while (!*should_stop && !is_gonna_exit()) {
-                for_each_monitor(i) {
-                        struct monitor_info *m = &minfo[i];
-
-                        if (!m->active)
-                                continue;
-
-                        if (!m->cap.support_brightness)
-                                continue;
-
-                        monitor_brightness_update(m);
-
-                        if (m->brightness.curr == m->brightness.set)
-                                continue;
-
-                        if (monitor_brightness_set(m, m->brightness.set) == 0) {
-                                monitor_brightness_update(m);
-
-                                if (!g_config.auto_brightness)
-                                        m->monitor_save->brightness.set = m->brightness.set;
-                        }
-                }
-
+                monitors_brightness_set();
                 usleep(g_config.brightness_update_interval_msec * 1000);
         }
 
