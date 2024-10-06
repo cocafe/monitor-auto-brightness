@@ -171,9 +171,15 @@ int usrcfg_monitor_info_merge(void)
 
                         if (is_wstr_equal(c->dev_path, m->str.reg_path)) {
                                 m->monitor_save = c;
+
                                 m->brightness.set = c->brightness.set;
-                                m->brightness.min = c->brightness.min;
-                                m->brightness.max = c->brightness.max;
+
+                                if (c->brightness.min > m->brightness.min)
+                                        m->brightness.min = c->brightness.min;
+
+                                if (c->brightness.max < m->brightness.max)
+                                        m->brightness.max = c->brightness.max;
+
                                 found = 1;
 
                                 break;
@@ -406,6 +412,35 @@ static int json_path_fix(char *json_path, size_t bytes)
         return 0;
 }
 
+int monitor_cfg_fix(struct monitor_cfg *c)
+{
+        if (c->brightness.max < c->brightness.min)
+                return -EINVAL;
+
+        if (c->brightness.set < c->brightness.min)
+                c->brightness.set = c->brightness.min;
+
+        if (c->brightness.set > c->brightness.max)
+                c->brightness.set = c->brightness.max;
+
+        return 0;
+}
+
+int usrcfg_fix(void)
+{
+        struct list_head *p;
+        int err = 0;
+
+        list_for_each(p, &g_config.monitor_list) {
+                struct monitor_cfg *c = container_of(p, struct monitor_cfg, node);
+
+                if ((err = monitor_cfg_fix(c)))
+                        return err;
+        }
+
+        return err;
+}
+
 int usrcfg_init(void)
 {
         jbuf_t *jbuf = &jbuf_usrcfg;
@@ -423,6 +458,9 @@ int usrcfg_init(void)
                 pr_mb_err("failed to load config, use default config");
                 return 0;
         }
+
+        if ((err = usrcfg_fix()))
+                return err;
 
         usrcfg_lux_map_fix();
 
