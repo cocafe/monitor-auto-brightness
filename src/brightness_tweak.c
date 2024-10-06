@@ -145,11 +145,12 @@ void brightness_adjust_wnd_create(void)
         wnd.cb_on_draw = brightness_adjust_wnd_draw;
         wnd.cb_on_close = NULL;
 
+        pr_info("create\n");
         nkgdi_window_create(&wnd, wnd_width, wnd_height, "Brightness Adjustment", 0, 0);
         nkgdi_window_icon_set(&wnd, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)));
         nk_set_style(nkgdi_window_nkctx_get(&wnd), nk_theme);
         brightness_wnd_position_set(&wnd);
-        SetFocus(wnd._internal.window_handle);
+        nkgdi_window_set_focus(&wnd);
 
         nkgdi_window_blocking_update(&wnd);
 
