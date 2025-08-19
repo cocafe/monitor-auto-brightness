@@ -70,7 +70,7 @@ static size_t curl_write_cb(void *contents, size_t size, size_t nmemb, void *arg
 
 static int sensorhub_buf_parse(char *buf)
 {
-        char *str = strstr(buf, "\nsensorhub_lux");
+        char *str = strstr(buf, "\nsensor_bh1750_lux");
 
         if (!str)
                 return -ENODATA;
@@ -83,18 +83,18 @@ static int sensorhub_buf_parse(char *buf)
         char b[256] = { };
         size_t cnt = ((intptr_t)line_end - (intptr_t)str);
 
-        strncpy(b, str, cnt);
+        strncpy(b, &str[1], cnt - 1);
 
         pr_verbose("%s\n", &b[1]);
 
         char *d;
         if ((d = strchr(b, '}'))) {
                 if (1 != sscanf(&d[1], "%f", &lux)) {
-                        pr_warn("failed to parse data string \"%s\"\n", b);
+                        pr_warn("failed to parse data string \"%s\"\n", &d[1]);
                         return -EINVAL;
                 }
         } else {
-                if (1 != sscanf(&b[1], "sensorhub_lux %f", &lux)) {
+                if (1 != sscanf(b, "sensor_bh1750_lux %f", &lux)) {
                         pr_warn("failed to parse data string \"%s\"\n", b);
                         return -EINVAL;
                 }
@@ -115,7 +115,7 @@ int sensorhub_query(void)
         if (is_strptr_not_set(g_config.sensor_hub.host))
                 return -ENODATA;
 
-        snprintf(url, sizeof(url), "http://%s:%u/metrics", g_config.sensor_hub.host, g_config.sensor_hub.port);
+        snprintf(url, sizeof(url), "http://%s:%u/sensor_env", g_config.sensor_hub.host, g_config.sensor_hub.port);
 
         chunk.buf = malloc(1);
 
