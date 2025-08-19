@@ -351,7 +351,7 @@ static int usrcfg_root_key_create(jbuf_t *b)
                         jbuf_offset_list_arr_setup(b,
                                                    arr_luxmap,
                                                    offsetof(struct monitor_cfg, lux_map),
-                                                   sizeof(struct monitor_cfg),
+                                                   sizeof(struct lux_map),
                                                    offsetof(struct lux_map, node),
                                                    0, 0);
 
